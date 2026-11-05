@@ -1,0 +1,33 @@
+{
+  "name": "novanotes",
+  "version": "1.0.0",
+  "description": "Full-Stack CRUD Notes Management Application with Express.js, MongoDB, and Mongoose",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/seeder.js"
+  },
+  "keywords": [
+    "express",
+    "mongodb",
+    "mongoose",
+    "crud",
+    "notes-app",
+    "rest-api",
+    "full-stack"
+  ],
+  "author": "CodeNova Performance Track",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "mongoose": "^9.11.2",
+    "morgan": "^1.12.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

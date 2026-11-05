@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaNotes | Enterprise CRUD Notes Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Background glow accents -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Header / Navigation Bar -->
+  <header class="app-header">
+    <div class="container header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-note-sticky"></i>
+        </div>
+        <div class="brand-text">
+          <h1>NovaNotes</h1>
+          <p class="brand-subtitle">Express.js & MongoDB Full-Stack CRUD Suite</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Live System & DB Status Pill -->
+        <div class="status-indicator" id="dbStatusBadge" title="Click to view API & DB Health">
+          <span class="status-dot"></span>
+          <span class="status-label">MongoDB: Connected</span>
+        </div>
+
+        <!-- API Reference Button -->
+        <button class="btn btn-outline" id="openApiDocsBtn" title="Inspect API Spec & Schema">
+          <i class="fa-solid fa-code"></i>
+          <span>API Docs</span>
+        </button>
+
+        <!-- Create Note CTA -->
+        <button class="btn btn-primary" id="openCreateModalBtn">
+          <i class="fa-solid fa-plus"></i>
+          <span>Create Note</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <!-- Analytics & KPI Overview Banner -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon metric-indigo">
+          <i class="fa-solid fa-book-open"></i>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Total Notes</span>
+          <span class="metric-value" id="statTotalNotes">0</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon metric-amber">
+          <i class="fa-solid fa-thumbtack"></i>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Pinned Notes</span>
+          <span class="metric-value" id="statPinnedNotes">0</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon metric-emerald">
+          <i class="fa-solid fa-folder-tree"></i>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Categories Active</span>
+          <span class="metric-value" id="statCategories">0</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon metric-rose">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">High Priority</span>
+          <span class="metric-value" id="statHighPriority">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Toolbar: Search, Filters, Priority & Sort Controls -->
+    <section class="toolbar-card">
+      <div class="toolbar-search-row">
+        <div class="search-input-wrapper">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search notes by title, content or tags... (Press / to focus)"
+            autocomplete="off"
+          />
+          <button class="search-clear-btn" id="searchClearBtn" style="display: none;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="toolbar-dropdowns">
+          <!-- Priority Filter -->
+          <div class="custom-select-wrapper">
+            <i class="fa-solid fa-flag select-icon"></i>
+            <select id="priorityFilter">
+              <option value="All">All Priorities</option>
+              <option value="High">High Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="Low">Low Priority</option>
+            </select>
+          </div>
+
+          <!-- Sort Selector -->
+          <div class="custom-select-wrapper">
+            <i class="fa-solid fa-arrow-down-short-wide select-icon"></i>
+            <select id="sortBySelect">
+              <option value="updated">Recently Updated</option>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="title_asc">Title (A - Z)</option>
+              <option value="title_desc">Title (Z - A)</option>
+            </select>
+          </div>
+
+          <!-- Pinned Only Toggle -->
+          <label class="pinned-toggle" title="Show only pinned notes">
+            <input type="checkbox" id="pinnedOnlyCheck" />
+            <span class="toggle-slider"></span>
+            <span class="toggle-text"><i class="fa-solid fa-thumbtack"></i> Pinned Only</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="category-pills" id="categoryPills">
+        <button class="pill active" data-category="All">All Notes</button>
+        <button class="pill" data-category="Work"><i class="fa-solid fa-briefcase"></i> Work</button>
+        <button class="pill" data-category="Personal"><i class="fa-solid fa-user"></i> Personal</button>
+        <button class="pill" data-category="Ideas"><i class="fa-solid fa-lightbulb"></i> Ideas</button>
+        <button class="pill" data-category="Tasks"><i class="fa-solid fa-check-double"></i> Tasks</button>
+        <button class="pill" data-category="Study"><i class="fa-solid fa-graduation-cap"></i> Study</button>
+        <button class="pill" data-category="General"><i class="fa-solid fa-layer-group"></i> General</button>
+      </div>
+    </section>
+
+    <!-- Notes Display Section -->
+    <section class="notes-container">
+      <!-- Loading Skeleton State -->
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p>Syncing notes with MongoDB...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-illustration">
+          <i class="fa-regular fa-clipboard"></i>
+        </div>
+        <h3 id="emptyTitle">No Notes Found</h3>
+        <p id="emptySubtitle">Create your first note or adjust your search filter criteria.</p>
+        <button class="btn btn-primary" id="emptyCreateBtn">
+          <i class="fa-solid fa-plus"></i> Create New Note
+        </button>
+      </div>
+
+      <!-- Pinned Notes Section -->
+      <div class="notes-group" id="pinnedNotesGroup" style="display: none;">
+        <div class="group-header">
+          <h2><i class="fa-solid fa-thumbtack group-icon amber-icon"></i> Pinned Notes</h2>
+          <span class="group-count" id="pinnedCount">0</span>
+        </div>
+        <div class="notes-grid" id="pinnedNotesGrid"></div>
+      </div>
+
+      <!-- All / Other Notes Section -->
+      <div class="notes-group" id="allNotesGroup">
+        <div class="group-header">
+          <h2 id="allNotesTitle"><i class="fa-solid fa-grip-vertical group-icon"></i> All Notes</h2>
+          <span class="group-count" id="allNotesCount">0</span>
+        </div>
+        <div class="notes-grid" id="notesGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Create / Edit Note Modal -->
+  <div class="modal-overlay" id="noteModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-header-icon" id="modalHeaderIcon">
+            <i class="fa-solid fa-plus"></i>
+          </div>
+          <div>
+            <h3 id="modalTitle">Create New Note</h3>
+            <p class="modal-subtitle">Save structured note data directly into MongoDB</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeNoteModalBtn">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="noteForm">
+        <input type="hidden" id="noteId" />
+
+        <!-- Title Field -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <label for="formTitle">Title <span class="required">*</span></label>
+            <span class="char-count" id="titleCharCount">0/150</span>
+          </div>
+          <input
+            type="text"
+            id="formTitle"
+            placeholder="e.g., CodeNova Architecture Review"
+            maxlength="150"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Category & Priority Row -->
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="formCategory">Category</label>
+            <select id="formCategory">
+              <option value="Work">Work</option>
+              <option value="Personal">Personal</option>
+              <option value="Ideas">Ideas</option>
+              <option value="Tasks">Tasks</option>
+              <option value="Study">Study</option>
+              <option value="General" selected>General</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="formPriority">Priority Level</label>
+            <select id="formPriority">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Color Accent Swatches -->
+        <div class="form-group">
+          <label>Theme Color Accent</label>
+          <div class="color-picker-group" id="colorPickerGroup">
+            <button type="button" class="color-swatch active" data-color="#4f46e5" style="background: #4f46e5;"></button>
+            <button type="button" class="color-swatch" data-color="#0284c7" style="background: #0284c7;"></button>
+            <button type="button" class="color-swatch" data-color="#059669" style="background: #059669;"></button>
+            <button type="button" class="color-swatch" data-color="#d97706" style="background: #d97706;"></button>
+            <button type="button" class="color-swatch" data-color="#dc2626" style="background: #dc2626;"></button>
+            <button type="button" class="color-swatch" data-color="#7c3aed" style="background: #7c3aed;"></button>
+            <button type="button" class="color-swatch" data-color="#db2777" style="background: #db2777;"></button>
+          </div>
+          <input type="hidden" id="formColor" value="#4f46e5" />
+        </div>
+
+        <!-- Content Area -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <label for="formContent">Content <span class="required">*</span></label>
+            <span class="char-count" id="contentMeta">0 words • 0 chars</span>
+          </div>
+          <textarea
+            id="formContent"
+            rows="6"
+            placeholder="Type your note description, bullet points, technical specs, or thoughts here..."
+            required
+          ></textarea>
+        </div>
+
+        <!-- Tags Input -->
+        <div class="form-group">
+          <label for="formTags">Tags <span class="field-hint">(comma separated)</span></label>
+          <input
+            type="text"
+            id="formTags"
+            placeholder="e.g., nodejs, express, mongodb, api"
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Pin to Top Checkbox -->
+        <div class="form-group checkbox-group">
+          <label class="custom-checkbox">
+            <input type="checkbox" id="formIsPinned" />
+            <span class="checkmark"></span>
+            <span class="checkbox-text">
+              <strong>Pin note to top</strong> (keeps this note prioritized on the dashboard)
+            </span>
+          </label>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelNoteModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveNoteBtn">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span id="saveBtnText">Save Note</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteConfirmModal">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-header-icon danger-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <h3>Delete Note</h3>
+            <p class="modal-subtitle">Confirm resource removal from MongoDB</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeDeleteModalBtn">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-content">
+        <p>Are you sure you want to permanently delete <strong id="deleteNoteTitlePreview">this note</strong>?</p>
+        <p class="text-muted">This action will invoke <code>DELETE /api/notes/:id</code> and cannot be undone.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="fa-solid fa-trash-can"></i>
+          <span>Delete Note</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Documentation & Architecture Drawer Modal -->
+  <div class="modal-overlay" id="apiDocsModal">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-header-icon">
+            <i class="fa-solid fa-network-wired"></i>
+          </div>
+          <div>
+            <h3>RESTful API Architecture & Endpoints</h3>
+            <p class="modal-subtitle">Express.js route specifications and MongoDB CRUD mapping</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeApiDocsBtn">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="api-docs-body">
+        <div class="api-endpoint-card">
+          <div class="endpoint-header">
+            <span class="http-badge http-get">GET</span>
+            <code class="endpoint-uri">/api/notes</code>
+          </div>
+          <p class="endpoint-desc">Retrieve all notes with support for full-text search, category filtering, priority filtering, sorting, and pagination.</p>
+          <div class="code-snippet">
+            <pre>Query Params: ?search=test&category=Work&priority=High&isPinned=true&sortBy=updated</pre>
+          </div>
+        </div>
+
+        <div class="api-endpoint-card">
+          <div class="endpoint-header">
+            <span class="http-badge http-post">POST</span>
+            <code class="endpoint-uri">/api/notes</code>
+          </div>
+          <p class="endpoint-desc">Create a new note with Mongoose schema validation and automatic timestamps.</p>
+          <div class="code-snippet">
+            <pre>{ "title": "System Design", "content": "Architecture specs...", "category": "Work", "priority": "High" }</pre>
+          </div>
+        </div>
+
+        <div class="api-endpoint-card">
+          <div class="endpoint-header">
+            <span class="http-badge http-get">GET</span>
+            <code class="endpoint-uri">/api/notes/:id</code>
+          </div>
+          <p class="endpoint-desc">Fetch a single note by its MongoDB 12-byte ObjectId with 404 CastError protection.</p>
+        </div>
+
+        <div class="api-endpoint-card">
+          <div class="endpoint-header">
+            <span class="http-badge http-put">PUT</span>
+            <code class="endpoint-uri">/api/notes/:id</code>
+          </div>
+          <p class="endpoint-desc">Update existing note properties using <code>findByIdAndUpdate</code> with validation.</p>
+        </div>
+
+        <div class="api-endpoint-card">
+          <div class="endpoint-header">
+            <span class="http-badge http-delete">DELETE</span>
+            <code class="endpoint-uri">/api/notes/:id</code>
+          </div>
+          <p class="endpoint-desc">Permanently remove a note document from the MongoDB collection.</p>
+        </div>
+
+        <div class="api-endpoint-card">
+          <div class="endpoint-header">
+            <span class="http-badge http-patch">PATCH</span>
+            <code class="endpoint-uri">/api/notes/:id/pin</code>
+          </div>
+          <p class="endpoint-desc">Toggle the pinned status flag of a note atomically.</p>
+        </div>
+
+        <div class="api-endpoint-card">
+          <div class="endpoint-header">
+            <span class="http-badge http-get">GET</span>
+            <code class="endpoint-uri">/api/notes/stats/overview</code>
+          </div>
+          <p class="endpoint-desc">Execute MongoDB aggregation pipelines to calculate total notes, pinned count, and category distributions.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="closeApiDocsBtnFooter">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Center -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Logic -->
+  <script src="js/app.js"></script>
+</body>
+</html>
